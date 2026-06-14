@@ -1,0 +1,7 @@
+flask
+flask-cors
+groq
+sentence-transformers
+faiss-cpu
+numpy
+gunicorn
