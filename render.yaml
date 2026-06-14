@@ -1,25 +1,28 @@
 services:
 - type: web
-  name: backend
+  name: ai-code-reviewer-backend
   env: python
   plan: free
   repo: auto
-  dir: Backend
+  rootDir: Backend
   branch: main
-  buildCommand: pip install -r requirements.txt
-  startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+  buildCommand: pip install -r requirements.txt && python build_vector_store.py
+  startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120
   envVars:
-    - key: OPENAI_API_KEY
-      fromSecret: OPENAI_API_KEY
+    - key: GROQ_API_KEY
+      sync: false
+    - key: PYTHON_VERSION
+      value: "3.11.0"
 
-- type: static_site
-  name: frontend
+- type: web
+  name: ai-code-reviewer-frontend
+  env: static
   plan: free
   repo: auto
-  dir: Frontend/frontend
+  rootDir: Frontend/frontend
   branch: main
   buildCommand: npm ci && npm run build
-  publishPath: build
+  staticPublishPath: build
   envVars:
     - key: REACT_APP_API_URL
-      fromSecret: REACT_APP_API_URL
+      sync: false

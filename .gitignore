@@ -15,4 +15,8 @@ Backend/vector_store/
 .vscode/
 
 # Node modules
+node_modules/
 Frontend/frontend/node_modules/
+
+# Package lock at root
+/package-lock.json

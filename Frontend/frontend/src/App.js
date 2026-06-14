@@ -18,8 +18,9 @@ function App() {
       setLoading(true);
       setReview("");
 
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
       const response = await axios.post(
-        "http://localhost:5000/review",
+        `${API_URL}/review`,
         {
           code: code,
         }
