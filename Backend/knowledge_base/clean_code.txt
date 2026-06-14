@@ -1,0 +1,5 @@
+Write readable code.
+
+Avoid duplicate code.
+
+Use proper comments.

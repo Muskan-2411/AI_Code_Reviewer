@@ -1,0 +1,7 @@
+Use snake_case function names.
+
+Use meaningful variable names.
+
+Keep functions small.
+
+Follow PEP8 formatting.

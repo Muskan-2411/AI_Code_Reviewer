@@ -1,0 +1,9 @@
+Never hardcode passwords.
+
+Never expose API keys.
+
+Avoid eval().
+
+Validate all user inputs.
+
+Prevent SQL Injection.
