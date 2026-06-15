@@ -17,9 +17,6 @@ Backend/vector_store/
 # Node modules
 node_modules/
 
-# Package lock at root
-/package-lock.json
-
 # OS files
 .DS_Store
 Thumbs.db
@@ -31,3 +28,10 @@ Thumbs.db
 
 # Build output
 Frontend/frontend/build/
+
+# Root-level Node files (not needed)
+/package.json
+/package-lock.json
+
+# Old Render config
+render.yaml
