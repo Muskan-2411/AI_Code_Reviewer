@@ -7,73 +7,93 @@ from sentence_transformers import SentenceTransformer
 from groq import Groq
 
 # =====================================
-# GROQ API
+# BASE DIRECTORY (for Railway compatibility)
+# =====================================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# =====================================
+# GROQ CLIENT (lazy — validated at request time)
 # =====================================
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise RuntimeError("Please set the GROQ_API_KEY environment variable")
 
-client = Groq(
-    api_key=GROQ_API_KEY
-)
+if not GROQ_API_KEY:
+    print("⚠️  WARNING: GROQ_API_KEY not set. API calls will fail.")
+    client = None
+else:
+    client = Groq(api_key=GROQ_API_KEY)
 
 # =====================================
 # EMBEDDING MODEL
 # =====================================
 
 print("Loading embedding model...")
-
 model = SentenceTransformer("all-MiniLM-L6-v2")
+print("✅ Embedding model loaded")
 
-print("Embedding model loaded")
 # =====================================
 # VECTOR STORE
 # =====================================
 
+VECTOR_STORE_DIR = os.path.join(BASE_DIR, "vector_store")
+
 print("Loading vector store...")
 
-index = faiss.read_index("vector_store/faiss_index")
+index_path = os.path.join(VECTOR_STORE_DIR, "faiss_index")
+docs_path = os.path.join(VECTOR_STORE_DIR, "documents.pkl")
 
-with open("vector_store/documents.pkl", "rb") as f:
-    documents = pickle.load(f)
-
-print("Vector store loaded")
-print(f"Documents Loaded: {len(documents)}")
+if not os.path.exists(index_path) or not os.path.exists(docs_path):
+    print("⚠️  WARNING: Vector store not found. Run build_vector_store.py first.")
+    index = None
+    documents = []
+else:
+    index = faiss.read_index(index_path)
+    with open(docs_path, "rb") as f:
+        documents = pickle.load(f)
+    print(f"✅ Vector store loaded — {len(documents)} documents")
 
 # =====================================
 # REVIEW FUNCTION
 # =====================================
+
 def review_code(code):
+    """Review code using RAG + Groq LLM."""
+
+    # Validate client is available
+    if client is None:
+        return "❌ Error: GROQ_API_KEY is not configured on the server."
 
     try:
+        # ----------------------------------
+        # RAG: Retrieve relevant context
+        # ----------------------------------
+        context = ""
 
-        # Generate embedding
-        query_embedding = model.encode(
-            [code],
-            convert_to_numpy=True
-        )
+        if index is not None and len(documents) > 0:
+            query_embedding = model.encode(
+                [code],
+                convert_to_numpy=True
+            )
+            query_embedding = np.array(
+                query_embedding,
+                dtype=np.float32
+            )
 
-        query_embedding = np.array(
-            query_embedding,
-            dtype=np.float32
-        )
+            # Retrieve top-k docs
+            k = min(3, len(documents))
+            distances, indices = index.search(query_embedding, k)
 
-        # Retrieve top-k docs
-        distances, indices = index.search(query_embedding, 3)
+            retrieved_docs = []
+            for idx in indices[0]:
+                if 0 <= idx < len(documents):
+                    retrieved_docs.append(documents[idx])
 
-        retrieved_docs = []
+            context = "\n\n".join(retrieved_docs)
 
-        for idx in indices[0]:
-            if 0 <= idx < len(documents):
-                retrieved_docs.append(documents[idx])
-
-        context = "\n\n".join(retrieved_docs)
-
-    # =====================================
-    # PROMPT INSIDE FUNCTION (FIXED)
-    # =====================================
-
+        # ----------------------------------
+        # Build prompt
+        # ----------------------------------
         prompt = f"""
 You are a strict but fair Senior Software Engineer.
 
@@ -107,6 +127,9 @@ language :
 Be fair. Do NOT always assume security issues.
 """
 
+        # ----------------------------------
+        # Call Groq API
+        # ----------------------------------
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
@@ -116,12 +139,11 @@ Be fair. Do NOT always assume security issues.
                 }
             ],
             temperature=0.3,
-            max_tokens=120
+            max_tokens=300
         )
 
         result = response.choices[0].message.content.strip()
-
         return result
 
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"❌ Error during review: {str(e)}"

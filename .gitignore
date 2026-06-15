@@ -5,10 +5,10 @@ __pycache__/
 *.pyd
 
 # Local environment variables
-*.env
-Backend/.env
+.env
+*.env.local
 
-# Generated data
+# Generated data (built at deploy time)
 Backend/vector_store/
 
 # VS Code
@@ -16,7 +16,18 @@ Backend/vector_store/
 
 # Node modules
 node_modules/
-Frontend/frontend/node_modules/
 
 # Package lock at root
 /package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Build output
+Frontend/frontend/build/
