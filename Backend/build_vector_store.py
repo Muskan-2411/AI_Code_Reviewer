@@ -5,6 +5,9 @@ import numpy as np
 
 from sentence_transformers import SentenceTransformer
 
+# Base directory — ensures paths work on Railway
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 print("Loading embedding model...")
 
 model = SentenceTransformer(
@@ -13,7 +16,7 @@ model = SentenceTransformer(
 
 print("Model loaded successfully")
 
-knowledge_folder = "knowledge_base"
+knowledge_folder = os.path.join(BASE_DIR, "knowledge_base")
 
 if not os.path.exists(knowledge_folder):
     raise Exception(
@@ -72,18 +75,20 @@ index.add(
     embeddings
 )
 
+vector_store_dir = os.path.join(BASE_DIR, "vector_store")
+
 os.makedirs(
-    "vector_store",
+    vector_store_dir,
     exist_ok=True
 )
 
 faiss.write_index(
     index,
-    "vector_store/faiss_index"
+    os.path.join(vector_store_dir, "faiss_index")
 )
 
 with open(
-    "vector_store/documents.pkl",
+    os.path.join(vector_store_dir, "documents.pkl"),
     "wb"
 ) as f:
 
@@ -94,5 +99,5 @@ with open(
 
 print("\nVector Store Created Successfully")
 print("Saved:")
-print("vector_store/faiss_index")
-print("vector_store/documents.pkl")
+print(f"  {vector_store_dir}/faiss_index")
+print(f"  {vector_store_dir}/documents.pkl")
