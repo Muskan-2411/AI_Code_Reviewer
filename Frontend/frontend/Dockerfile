@@ -2,6 +2,10 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Expose Railway environment variables to the React build process
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
 # Install dependencies (using npm install instead of ci to be more forgiving)
 COPY package*.json ./
 RUN npm install
